@@ -103,6 +103,7 @@ const createToken=(userId)=>{
 
 app.post("/login",(req,res)=>{
   const {email,password}=req.body();
+  console.log("in login api");
 
   // check email and password are provided
   if(!email || !password){
