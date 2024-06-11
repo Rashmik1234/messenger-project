@@ -85,3 +85,47 @@ app.post("/register", async (req, res) => {
     res.status(500).json({ message: "Error registering user" });
   }
 });
+
+
+// function to crerate token for user
+
+const createToken=(userId)=>{
+  const payload={
+    userId:userId,
+  };
+
+  const token=jwt.sign(payload,"hwjhbakjbksu",{expiresIn:"1h"});
+  return token;
+};
+
+
+// endpoint for logging for user
+
+app.post("/login",(req,res)=>{
+  const {email,password}=req.body();
+
+  // check email and password are provided
+  if(!email || !password){
+    return res.status(404).json({message:"Email and password are required"})
+  }
+
+ User.findOne({email}).then((user)=>{
+  if(!user){
+    // user not found/
+    return res.status(404).json({message:"User not found"})
+  }
+
+  if(user.password !== password){
+    return res.status(404).json({message:"invalid password"})
+  }
+
+  const token=createToken(user._id);
+  res.status(200).json({token})
+
+ }).catch((error)=>{
+  console.log("error in finding user",error)
+  res.status(500).json({message:"Internal server error"})
+ })
+
+ 
+})

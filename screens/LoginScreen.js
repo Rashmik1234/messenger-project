@@ -1,14 +1,53 @@
-import { KeyboardAvoidingView, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { KeyboardAvoidingView, Pressable, StyleSheet, Text, TextInput, View,Alert } from 'react-native'
 import {React,useState} from 'react'
 import { useNavigation } from '@react-navigation/native';
-
+import axios from "axios";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = () => {
 
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
-
   const navigation=useNavigation();
+
+  // useEffect(()=>{
+  //       checkLoginStatus=async() =>{
+
+  //         try{
+
+  //           const token=await AsyncStorage.getItem("authToken");
+  
+  //           if(token){
+  //             navigation.navigate("Home");
+  //           }else{
+              
+  //           }
+  //         }catch(error){
+  //           console.log("error",error)
+  //         }
+  //       }
+  // },[])
+  const handleLogin=()=>{
+    const user={
+      email:email,
+      password:password
+    };
+
+    axios.post("https://messenger-project-q3g0.onrender.com/login", user).then((response)=>{
+     
+       console.log(response);
+       const token = response.data.token;
+
+       AsyncStorage.setItem("authToken",token);
+
+       navigation.navigate("Home");
+    }).catch((error)=>{
+      Alert.alert("Loginn error","Invalid email or password");
+      console.log("Login Error",error);
+    })
+  }
+
+  
   return (
     <View style={{flex:1,backgroundColor:"white",padding:10,alignItems:"center"}}>
       <KeyboardAvoidingView>
@@ -43,7 +82,7 @@ const LoginScreen = () => {
           </View>
         </View>
 
-        <Pressable  style={{width:200,backgroundColor:"#4A55A2",padding:15,marginTop:50,marginRight:"auto",marginLeft:"auto",borderRadius:10}}>
+        <Pressable onPress={handleLogin}  style={{width:200,backgroundColor:"#4A55A2",padding:15,marginTop:50,marginRight:"auto",marginLeft:"auto",borderRadius:10}}>
           <Text style={{textAlign:"center",fontSize:17,fontweight:"bold",color:"white"}}>Login</Text>
         </Pressable>
 

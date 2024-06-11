@@ -27,7 +27,7 @@ const RegisterScreen = () => {
 
     console.log("Registering user:", user);
 
-    axios.post("http://localhost:3000/register", user) // replace with your local IP address
+    axios.post("https://messenger-project-q3g0.onrender.com/register", user) // replace with your local IP address
       .then((response) => {
         console.log("Response:", response.data);
         Alert.alert(
