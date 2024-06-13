@@ -2,6 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const jwt = require("jsonwebtoken");
+const User = require("./models/user"); // Ensure this path is correct
 
 const app = express();
 const port = 3000;
@@ -37,8 +39,6 @@ app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
-const User = require("./models/user");
-
 app.post("/register", async (req, res) => {
   console.log("Received registration request:", req.body);
   const { name, email, password, image } = req.body;
@@ -51,82 +51,44 @@ app.post("/register", async (req, res) => {
     const newUser = new User({ name, email, password, image });
 
     const registeredUser = await newUser.save();
-    if (registeredUser) {
-      res.status(200).json({ message: "User registered successfully!" });
-    } else {
-      res.status(400).json({ message: "User not registered" });
-    }
-  } catch (error) {
-    console.error("Error registering user", error);
-    res.status(500).json({ message: "Error registering user" });
-  }
-});
-app.post("/register", async (req, res) => {
-  console.log("in index.js");
-  const { name, email, password, image } = req.body;
-
-  try {
-    // Check if required fields are provided
-    if (!name || !email || !password || !image) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    // Create a new user instance
-    const newUser = new User({ name, email, password, image });
-
-    // Save the new user to the database and await the result
-    const registeredUser = await newUser.save();
-
-    // If save is successful, send a success response
     res.status(200).json({ message: "User registered successfully!" });
   } catch (error) {
-    // If an error occurs during save, catch it and send an error response
     console.error("Error registering user", error);
     res.status(500).json({ message: "Error registering user" });
   }
 });
 
-
-// function to crerate token for user
-
-const createToken=(userId)=>{
-  const payload={
-    userId:userId,
+const createToken = (userId) => {
+  const payload = {
+    userId: userId,
   };
 
-  const token=jwt.sign(payload,"hwjhbakjbksu",{expiresIn:"1h"});
+  const token = jwt.sign(payload, "hwjhbakjbksu", { expiresIn: "1h" });
   return token;
 };
 
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
 
-// endpoint for logging for user
-
-app.post("/login",(req,res)=>{
-  const {email,password}=req.body();
-  console.log("in login api");
-
-  // check email and password are provided
-  if(!email || !password){
-    return res.status(404).json({message:"Email and password are required"})
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
   }
 
- User.findOne({email}).then((user)=>{
-  if(!user){
-    // user not found/
-    return res.status(404).json({message:"User not found"})
+  try {
+    const user = await  User.findOne({ email: email });
+    console.log(user)
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.password !== password) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    const token = createToken(user._id);
+    res.status(200).json({ message:"Login successful" });
+  } catch (error) {
+    console.log("Error in finding user", error);
+    res.status(500).json({ message: "Internal server error" });
   }
-
-  if(user.password !== password){
-    return res.status(404).json({message:"invalid password"})
-  }
-
-  const token=createToken(user._id);
-  res.status(200).json({token})
-
- }).catch((error)=>{
-  console.log("error in finding user",error)
-  res.status(500).json({message:"Internal server error"})
- })
-
- 
-})
+});
